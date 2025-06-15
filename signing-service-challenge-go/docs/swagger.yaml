@@ -8,6 +8,10 @@ definitions:
         type: string
       label:
         type: string
+      privateKey:
+        type: string
+      publicKey:
+        type: string
     type: object
   api.ErrorResponse:
     properties:
@@ -16,13 +20,16 @@ definitions:
           type: string
         type: array
     type: object
+  api.HealthResponse:
+    properties:
+      status:
+        type: string
+      version:
+        type: string
+    type: object
   api.SignatureResponse:
     properties:
-      algorithm:
-        type: string
       deviceId:
-        type: string
-      signature:
         type: string
     type: object
 host: http://localhost:8080/
@@ -32,6 +39,83 @@ info:
   title: Signing Service API
   version: "1.0"
 paths:
+  /health:
+    delete:
+      consumes:
+      - application/json
+      description: Evaluates the health of the service and returns a standardized
+        response.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is healthy
+          schema:
+            $ref: '#/definitions/api.HealthResponse'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Check the health of the service
+      tags:
+      - Health
+    get:
+      consumes:
+      - application/json
+      description: Evaluates the health of the service and returns a standardized
+        response.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is healthy
+          schema:
+            $ref: '#/definitions/api.HealthResponse'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Check the health of the service
+      tags:
+      - Health
+    post:
+      consumes:
+      - application/json
+      description: Evaluates the health of the service and returns a standardized
+        response.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is healthy
+          schema:
+            $ref: '#/definitions/api.HealthResponse'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Check the health of the service
+      tags:
+      - Health
+    put:
+      consumes:
+      - application/json
+      description: Evaluates the health of the service and returns a standardized
+        response.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is healthy
+          schema:
+            $ref: '#/definitions/api.HealthResponse'
+        "405":
+          description: Method not allowed
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Check the health of the service
+      tags:
+      - Health
   /sign/{deviceId}:
     post:
       consumes:
@@ -70,26 +154,22 @@ paths:
             $ref: '#/definitions/api.ErrorResponse'
       summary: Sign a transaction
       tags:
-      - Device
+      - Devices
   /signature-device:
     post:
       consumes:
       - application/json
       description: Creates a new signature device with the specified parameters
       parameters:
-      - description: Device ID
-        in: query
-        name: id
-        required: true
-        type: string
       - description: Algorithm (ECC or RSA)
         in: query
         name: algorithm
         required: true
         type: string
-      - description: Optional label for the device
+      - description: Label for the device
         in: query
         name: label
+        required: true
         type: string
       produces:
       - application/json
@@ -108,5 +188,5 @@ paths:
             type: string
       summary: Create a new signature device
       tags:
-      - SignatureDevices
+      - Devices
 swagger: "2.0"

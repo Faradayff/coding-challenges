@@ -7,6 +7,7 @@ type HealthResponse struct {
 	Version string `json:"version"`
 }
 
+// Health evaluates the health of the service and writes a standardized response.
 // Health godoc
 // @Title Health Check
 // @Summary Check the health of the service
@@ -16,9 +17,7 @@ type HealthResponse struct {
 // @Produce json
 // @Success 200 {object} HealthResponse "Service is healthy"
 // @Failure 405 {object} ErrorResponse "Method not allowed"
-// @Router /api/v0/health
-
-// Health evaluates the health of the service and writes a standardized response.
+// @Router /health [get]
 func (s *Server) Health(response http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
 		WriteErrorResponse(response, http.StatusMethodNotAllowed, []string{

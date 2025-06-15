@@ -1,17 +1,24 @@
 package api
 
-// CreateSignatureDeviceResponse defines the response structure for CreateSignatureDevice
+import "github.com/google/uuid"
+
 type CreateSignatureDeviceResponse struct {
-	ID        ID     `json:"id"`
-	Algorithm string `json:"algorithm"`
-	Label     string `json:"label,omitempty"`
+	ID         uuid.UUID `json:"id"`
+	Algorithm  string    `json:"algorithm"`
+	Label      string    `json:"label"`
+	PublicKey  string    `json:"publicKey"`
+	PrivateKey string    `json:"privateKey"`
 }
 
-// SignatureResponse defines the response structure for SignTransaction
 type SignatureResponse struct {
-	DeviceID  ID     `json:"deviceId"`
-	Algorithm string `json:"algorithm"`
-	Signature string `json:"signature"`
+	ID uuid.UUID `json:"deviceId"`
 }
 
-type ID string
+type GetSignatureDeviceResponse struct {
+	ID                uuid.UUID `json:"id"`
+	Algorithm         string    `json:"algorithm"`
+	Label             string    `json:"label"`
+	PublicKey         string    `json:"publicKey"`
+	PrivateKey        string    `json:"privateKey"`
+	Signature_counter int       `json:"signatureCounter"`
+}

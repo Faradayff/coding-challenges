@@ -3,32 +3,30 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/utils"
+	"github.com/google/uuid"
 )
 
 // CreateSignatureDevice godoc
 // @Title CreateSignatureDevice
 // @Summary Create a new signature device
 // @Description Creates a new signature device with the specified parameters
-// @Tags SignatureDevices
+// @Tags Devices
 // @Accept json
 // @Produce json
-// @Param id query string true "Device ID"
 // @Param algorithm query string true "Algorithm (ECC or RSA)"
-// @Param label query string false "Optional label for the device"
+// @Param label query string true "Label for the device"
 // @Success 200 {object} CreateSignatureDeviceResponse
 // @Failure 400 {string} string "Bad Request"
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /signature-device [post]
 func (s *Server) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
 	algorithm := r.URL.Query().Get("algorithm")
 	label := r.URL.Query().Get("label")
 
 	// Validate required parameters
-	if id == "" {
-		WriteErrorResponse(w, http.StatusBadRequest, []string{"Missing required parameter: id"})
-		return
-	}
 	if algorithm == "" {
 		WriteErrorResponse(w, http.StatusBadRequest, []string{"Missing required parameter: algorithm"})
 		return
@@ -39,19 +37,53 @@ func (s *Server) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, http.StatusBadRequest, []string{"Invalid algorithm. Must be 'ECC' or 'RSA'"})
 		return
 	}
-	// Prepare response data
-	data := map[string]any{
-		"id":        id,
-		"algorithm": algorithm,
-		"label":     label,
+
+	ctx := r.Context()
+
+	device, err := domain.CreateSignatureDevice(ctx, algorithm, label)
+	if err != nil {
+		WriteErrorResponse(w, http.StatusInternalServerError, []string{"Failed to create signature device", err.Error()})
+		return
 	}
 
-	// ctx := r.Context()
+	var publicKey, privateKey string
+	if algorithm == "ECC" {
+
+		publicKey, err = utils.ECCPublicKeyToString(device.PublicKey)
+		if err != nil {
+			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
+		}
+
+		privateKey, err = utils.ECCPrivateKeyToString(device.PrivateKey)
+		if err != nil {
+			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
+		}
+
+	} else if algorithm == "RSA" {
+
+		publicKey, err = utils.RSAPublicKeyToString(device.PublicKey)
+		if err != nil {
+			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
+		}
+
+		privateKey, err = utils.RSAPrivateKeyToString(device.PrivateKey)
+		if err != nil {
+			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
+		}
+	}
+
+	createSignatureDeviceResponse := CreateSignatureDeviceResponse{
+		ID:         device.ID,
+		Algorithm:  device.Algorithm,
+		Label:      device.Label,
+		PublicKey:  publicKey,
+		PrivateKey: privateKey,
+	}
 
 	// Set response headers and encode the data as JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	if err := json.NewEncoder(w).Encode(createSignatureDeviceResponse); err != nil {
 		WriteErrorResponse(w, http.StatusInternalServerError, []string{"Failed to encode response"})
 	}
 }
@@ -60,7 +92,7 @@ func (s *Server) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 // @Title SignTransaction
 // @Summary Sign a transaction
 // @Description Signs a transaction using the specified device ID and data payload.
-// @Tags Device
+// @Tags Devices
 // @Accept json
 // @Produce json
 // @Param deviceId path string true "Device ID"
@@ -79,18 +111,29 @@ func (s *Server) SignTransaction(w http.ResponseWriter, r *http.Request) {
 		WriteErrorResponse(w, http.StatusBadRequest, []string{"Missing required parameter: deviceId"})
 		return
 	}
+	uuid, err := uuid.Parse(deviceId)
+	if err != nil {
+		WriteErrorResponse(w, http.StatusBadRequest, []string{"Invalid deviceId. Must be a valid UUID"})
+		return
+	}
 	if data == "" {
 		WriteErrorResponse(w, http.StatusBadRequest, []string{"Missing required parameter: data"})
 		return
 	}
 
-	// Simulate signing logic (replace with actual implementation)
-	signature := "signed_" + data
+	signature, err := domain.SignTransaction(r.Context(), uuid, data)
+	if err != nil {
+		if err.Error() == "device not found" {
+			WriteErrorResponse(w, http.StatusNotFound, []string{"Device not found"})
+			return
+		} else {
+			WriteErrorResponse(w, http.StatusInternalServerError, []string{"Failed to sign transaction", err.Error()})
+			return
+		}
+	}
 
-	// Prepare response data
-	response := map[string]any{
-		"deviceId":  deviceId,
-		"signature": signature,
+	response := SignatureResponse{
+		ID: signature.ID,
 	}
 
 	// Set response headers and encode the data as JSON

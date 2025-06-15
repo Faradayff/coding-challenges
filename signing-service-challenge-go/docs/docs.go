@@ -15,6 +15,116 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/health": {
+            "get": {
+                "description": "Evaluates the health of the service and returns a standardized response.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Check the health of the service",
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy",
+                        "schema": {
+                            "$ref": "#/definitions/api.HealthResponse"
+                        }
+                    },
+                    "405": {
+                        "description": "Method not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Evaluates the health of the service and returns a standardized response.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Check the health of the service",
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy",
+                        "schema": {
+                            "$ref": "#/definitions/api.HealthResponse"
+                        }
+                    },
+                    "405": {
+                        "description": "Method not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Evaluates the health of the service and returns a standardized response.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Check the health of the service",
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy",
+                        "schema": {
+                            "$ref": "#/definitions/api.HealthResponse"
+                        }
+                    },
+                    "405": {
+                        "description": "Method not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Evaluates the health of the service and returns a standardized response.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Check the health of the service",
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy",
+                        "schema": {
+                            "$ref": "#/definitions/api.HealthResponse"
+                        }
+                    },
+                    "405": {
+                        "description": "Method not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/sign/{deviceId}": {
             "post": {
                 "description": "Signs a transaction using the specified device ID and data payload.",
@@ -25,7 +135,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Device"
+                    "Devices"
                 ],
                 "summary": "Sign a transaction",
                 "parameters": [
@@ -84,17 +194,10 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SignatureDevices"
+                    "Devices"
                 ],
                 "summary": "Create a new signature device",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Device ID",
-                        "name": "id",
-                        "in": "query",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Algorithm (ECC or RSA)",
@@ -104,9 +207,10 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Optional label for the device",
+                        "description": "Label for the device",
                         "name": "label",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -144,6 +248,12 @@ const docTemplate = `{
                 },
                 "label": {
                     "type": "string"
+                },
+                "privateKey": {
+                    "type": "string"
+                },
+                "publicKey": {
+                    "type": "string"
                 }
             }
         },
@@ -158,16 +268,21 @@ const docTemplate = `{
                 }
             }
         },
+        "api.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
         "api.SignatureResponse": {
             "type": "object",
             "properties": {
-                "algorithm": {
-                    "type": "string"
-                },
                 "deviceId": {
-                    "type": "string"
-                },
-                "signature": {
                     "type": "string"
                 }
             }
