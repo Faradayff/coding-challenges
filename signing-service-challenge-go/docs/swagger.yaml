@@ -1,0 +1,112 @@
+basePath: /api/v0
+definitions:
+  api.CreateSignatureDeviceResponse:
+    properties:
+      algorithm:
+        type: string
+      id:
+        type: string
+      label:
+        type: string
+    type: object
+  api.ErrorResponse:
+    properties:
+      errors:
+        items:
+          type: string
+        type: array
+    type: object
+  api.SignatureResponse:
+    properties:
+      algorithm:
+        type: string
+      deviceId:
+        type: string
+      signature:
+        type: string
+    type: object
+host: http://localhost:8080/
+info:
+  contact: {}
+  description: API for managing signature devices and signing transactions.
+  title: Signing Service API
+  version: "1.0"
+paths:
+  /sign/{deviceId}:
+    post:
+      consumes:
+      - application/json
+      description: Signs a transaction using the specified device ID and data payload.
+      parameters:
+      - description: Device ID
+        in: path
+        name: deviceId
+        required: true
+        type: string
+      - description: Data to be signed
+        in: body
+        name: data
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Signature successfully generated
+          schema:
+            $ref: '#/definitions/api.SignatureResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Device not found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Sign a transaction
+      tags:
+      - Device
+  /signature-device:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new signature device with the specified parameters
+      parameters:
+      - description: Device ID
+        in: query
+        name: id
+        required: true
+        type: string
+      - description: Algorithm (ECC or RSA)
+        in: query
+        name: algorithm
+        required: true
+        type: string
+      - description: Optional label for the device
+        in: query
+        name: label
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.CreateSignatureDeviceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new signature device
+      tags:
+      - SignatureDevices
+swagger: "2.0"

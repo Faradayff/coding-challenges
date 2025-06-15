@@ -2,12 +2,15 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // Response is the generic API response container.
 type Response struct {
-	Data interface{} `json:"data"`
+	Data any `json:"data"`
 }
 
 // ErrorResponse is the generic error API response container.
@@ -32,10 +35,21 @@ func NewServer(listenAddress string) *Server {
 func (s *Server) Run() error {
 	mux := http.NewServeMux()
 
+	// Initialize health service
 	mux.Handle("/api/v0/health", http.HandlerFunc(s.Health))
 
-	// TODO: register further HandlerFuncs here ...
+	// Initialize Swagger documentation
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
+	// Create a subrouter for device-related routes
+	deviceMux := http.NewServeMux()
+	deviceMux.Handle("POST /new-device", http.HandlerFunc(s.CreateSignatureDevice))
+	deviceMux.Handle("POST /sign", http.HandlerFunc(s.SignTransaction))
+
+	// Add the device prefix
+	mux.Handle("/api/v0/device/", http.StripPrefix("/api/v0/device", deviceMux))
+
+	log.Printf("Server running at %s", s.listenAddress)
 	return http.ListenAndServe(s.listenAddress, mux)
 }
 
@@ -64,7 +78,7 @@ func WriteErrorResponse(w http.ResponseWriter, code int, errors []string) {
 
 // WriteAPIResponse takes an HTTP status code and a generic data struct
 // and writes those as an HTTP response in a structured format.
-func WriteAPIResponse(w http.ResponseWriter, code int, data interface{}) {
+func WriteAPIResponse(w http.ResponseWriter, code int, data any) {
 	w.WriteHeader(code)
 
 	response := Response{
