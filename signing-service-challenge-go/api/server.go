@@ -21,6 +21,7 @@ type ErrorResponse struct {
 // Server manages HTTP requests and dispatches them to the appropriate services.
 type Server struct {
 	listenAddress string
+	api           Api
 }
 
 // NewServer is a factory to instantiate a new Server.
@@ -43,8 +44,8 @@ func (s *Server) Run() error {
 
 	// Create a subrouter for device-related routes
 	deviceMux := http.NewServeMux()
-	deviceMux.Handle("POST /new-device", http.HandlerFunc(s.CreateSignatureDevice))
-	deviceMux.Handle("POST /sign", http.HandlerFunc(s.SignTransaction))
+	deviceMux.Handle("POST /new-device", http.HandlerFunc(s.api.CreateSignatureDevice))
+	deviceMux.Handle("POST /sign", http.HandlerFunc(s.api.SignTransaction))
 
 	// Add the device prefix
 	mux.Handle("/api/v0/device/", http.StripPrefix("/api/v0/device", deviceMux))

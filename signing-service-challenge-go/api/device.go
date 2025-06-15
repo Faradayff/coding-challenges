@@ -9,6 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
+type Api struct {
+	service domain.UserService
+}
+
 // CreateSignatureDevice godoc
 // @Title CreateSignatureDevice
 // @Summary Create a new signature device
@@ -22,7 +26,7 @@ import (
 // @Failure 400 {string} string "Bad Request"
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /signature-device [post]
-func (s *Server) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
+func (a *Api) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 	algorithm := r.URL.Query().Get("algorithm")
 	label := r.URL.Query().Get("label")
 
@@ -40,7 +44,7 @@ func (s *Server) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	device, err := domain.CreateSignatureDevice(ctx, algorithm, label)
+	device, err := a.service.CreateSignatureDevice(ctx, algorithm, label)
 	if err != nil {
 		WriteErrorResponse(w, http.StatusInternalServerError, []string{"Failed to create signature device", err.Error()})
 		return
@@ -102,7 +106,7 @@ func (s *Server) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResponse "Device not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /sign/{deviceId} [post]
-func (s *Server) SignTransaction(w http.ResponseWriter, r *http.Request) {
+func (a *Api) SignTransaction(w http.ResponseWriter, r *http.Request) {
 	deviceId := r.URL.Query().Get("deviceId")
 	data := r.URL.Query().Get("data")
 
@@ -121,7 +125,9 @@ func (s *Server) SignTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	signature, err := domain.SignTransaction(r.Context(), uuid, data)
+	ctx := r.Context()
+
+	signature, err := a.service.SignTransaction(ctx, uuid, data)
 	if err != nil {
 		if err.Error() == "device not found" {
 			WriteErrorResponse(w, http.StatusNotFound, []string{"Device not found"})
@@ -144,8 +150,8 @@ func (s *Server) SignTransaction(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) GetSignatureDevice(w http.ResponseWriter, r *http.Request) {
+func (a *Api) GetSignatureDevice(w http.ResponseWriter, r *http.Request) {
 }
 
-func (s *Server) ListSignatureDevices(w http.ResponseWriter, r *http.Request) {
+func (a *Api) ListSignatureDevices(w http.ResponseWriter, r *http.Request) {
 }

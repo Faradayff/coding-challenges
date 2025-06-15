@@ -7,7 +7,11 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateSignatureDevice(ctx context.Context, algorithm, label string) (Device, error) {
+type UserService struct {
+	repo any //UserRepository
+}
+
+func (s *UserService) CreateSignatureDevice(ctx context.Context, algorithm, label string) (Device, error) {
 	id := uuid.New()
 
 	var publicKey, privateKey any
@@ -36,15 +40,20 @@ func CreateSignatureDevice(ctx context.Context, algorithm, label string) (Device
 	// Call the persistence layer to save the device
 
 	device := Device{
-		ID:         id,
-		Algorithm:  algorithm,
-		Label:      label,
-		PublicKey:  publicKey,
-		PrivateKey: privateKey,
+		ID:                id,
+		Algorithm:         algorithm,
+		Label:             label,
+		PublicKey:         publicKey,
+		PrivateKey:        privateKey,
+		Signature_counter: 0,
 	}
 	return device, nil
 }
 
-func SignTransaction(ctx context.Context, ID uuid.UUID, data string) (Signature, error) {
+func (s *UserService) SignTransaction(ctx context.Context, ID uuid.UUID, data string) (Signature, error) {
+	// Retrieve the device from the persistence layer using the ID
+	device := Device{}
+
+	device.Signature_counter++
 	return Signature{}, nil
 }
