@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
@@ -44,6 +43,7 @@ func (a *Api) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
+	// Calling the service
 	device, err := a.service.CreateSignatureDevice(ctx, algorithm, label)
 	if err != nil {
 		WriteErrorResponse(w, http.StatusInternalServerError, []string{"Failed to create signature device", err.Error()})
@@ -76,6 +76,7 @@ func (a *Api) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Creating response
 	createSignatureDeviceResponse := CreateSignatureDeviceResponse{
 		ID:         device.ID,
 		Algorithm:  device.Algorithm,
@@ -84,12 +85,7 @@ func (a *Api) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 		PrivateKey: privateKey,
 	}
 
-	// Set response headers and encode the data as JSON
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(createSignatureDeviceResponse); err != nil {
-		WriteErrorResponse(w, http.StatusInternalServerError, []string{"Failed to encode response"})
-	}
+	WriteAPIResponse(w, http.StatusCreated, createSignatureDeviceResponse)
 }
 
 // SignTransaction godoc
@@ -101,7 +97,7 @@ func (a *Api) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param deviceId path string true "Device ID"
 // @Param data body string true "Data to be signed"
-// @Success 200 {object} SignatureResponse "Signature successfully generated"
+// @Success 200 {object} SignaturedDataResponse "Signature successfully generated"
 // @Failure 400 {object} ErrorResponse "Invalid input data"
 // @Failure 404 {object} ErrorResponse "Device not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -127,7 +123,8 @@ func (a *Api) SignTransaction(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	signature, err := a.service.SignTransaction(ctx, uuid, data)
+	// Calling the service
+	signaturedData, err := a.service.SignTransaction(ctx, uuid, data)
 	if err != nil {
 		if err.Error() == "device not found" {
 			WriteErrorResponse(w, http.StatusNotFound, []string{"Device not found"})
@@ -138,16 +135,13 @@ func (a *Api) SignTransaction(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response := SignatureResponse{
-		ID: signature.ID,
+	// Creating response
+	signaturedDataResponse := SignaturedDataResponse{
+		Signature:  signaturedData.Signature,
+		SignedData: signaturedData.SignedData,
 	}
 
-	// Set response headers and encode the data as JSON
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		WriteErrorResponse(w, http.StatusInternalServerError, []string{"Failed to encode response"})
-	}
+	WriteAPIResponse(w, http.StatusOK, signaturedDataResponse)
 }
 
 func (a *Api) GetSignatureDevice(w http.ResponseWriter, r *http.Request) {

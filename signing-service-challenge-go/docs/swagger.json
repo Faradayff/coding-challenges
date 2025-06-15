@@ -6,92 +6,11 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "http://localhost:8080/",
+    "host": "localhost:8080",
     "basePath": "/api/v0",
     "paths": {
         "/health": {
             "get": {
-                "description": "Evaluates the health of the service and returns a standardized response.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Health"
-                ],
-                "summary": "Check the health of the service",
-                "responses": {
-                    "200": {
-                        "description": "Service is healthy",
-                        "schema": {
-                            "$ref": "#/definitions/api.HealthResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method not allowed",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Evaluates the health of the service and returns a standardized response.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Health"
-                ],
-                "summary": "Check the health of the service",
-                "responses": {
-                    "200": {
-                        "description": "Service is healthy",
-                        "schema": {
-                            "$ref": "#/definitions/api.HealthResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method not allowed",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Evaluates the health of the service and returns a standardized response.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Health"
-                ],
-                "summary": "Check the health of the service",
-                "responses": {
-                    "200": {
-                        "description": "Service is healthy",
-                        "schema": {
-                            "$ref": "#/definitions/api.HealthResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method not allowed",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
                 "description": "Evaluates the health of the service and returns a standardized response.",
                 "consumes": [
                     "application/json"
@@ -154,7 +73,7 @@
                     "200": {
                         "description": "Signature successfully generated",
                         "schema": {
-                            "$ref": "#/definitions/api.SignatureResponse"
+                            "$ref": "#/definitions/api.SignaturedDataResponse"
                         }
                     },
                     "400": {
@@ -273,10 +192,16 @@
                 }
             }
         },
-        "api.SignatureResponse": {
+        "api.SignaturedDataResponse": {
             "type": "object",
             "properties": {
-                "deviceId": {
+                "signature": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "signed_data": {
                     "type": "string"
                 }
             }

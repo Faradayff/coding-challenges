@@ -27,12 +27,16 @@ definitions:
       version:
         type: string
     type: object
-  api.SignatureResponse:
+  api.SignaturedDataResponse:
     properties:
-      deviceId:
+      signature:
+        items:
+          type: integer
+        type: array
+      signed_data:
         type: string
     type: object
-host: http://localhost:8080/
+host: localhost:8080
 info:
   contact: {}
   description: API for managing signature devices and signing transactions.
@@ -40,64 +44,7 @@ info:
   version: "1.0"
 paths:
   /health:
-    delete:
-      consumes:
-      - application/json
-      description: Evaluates the health of the service and returns a standardized
-        response.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Service is healthy
-          schema:
-            $ref: '#/definitions/api.HealthResponse'
-        "405":
-          description: Method not allowed
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      summary: Check the health of the service
-      tags:
-      - Health
     get:
-      consumes:
-      - application/json
-      description: Evaluates the health of the service and returns a standardized
-        response.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Service is healthy
-          schema:
-            $ref: '#/definitions/api.HealthResponse'
-        "405":
-          description: Method not allowed
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      summary: Check the health of the service
-      tags:
-      - Health
-    post:
-      consumes:
-      - application/json
-      description: Evaluates the health of the service and returns a standardized
-        response.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Service is healthy
-          schema:
-            $ref: '#/definitions/api.HealthResponse'
-        "405":
-          description: Method not allowed
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
-      summary: Check the health of the service
-      tags:
-      - Health
-    put:
       consumes:
       - application/json
       description: Evaluates the health of the service and returns a standardized
@@ -139,7 +86,7 @@ paths:
         "200":
           description: Signature successfully generated
           schema:
-            $ref: '#/definitions/api.SignatureResponse'
+            $ref: '#/definitions/api.SignaturedDataResponse'
         "400":
           description: Invalid input data
           schema:

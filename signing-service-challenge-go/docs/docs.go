@@ -42,87 +42,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "put": {
-                "description": "Evaluates the health of the service and returns a standardized response.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Health"
-                ],
-                "summary": "Check the health of the service",
-                "responses": {
-                    "200": {
-                        "description": "Service is healthy",
-                        "schema": {
-                            "$ref": "#/definitions/api.HealthResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method not allowed",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Evaluates the health of the service and returns a standardized response.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Health"
-                ],
-                "summary": "Check the health of the service",
-                "responses": {
-                    "200": {
-                        "description": "Service is healthy",
-                        "schema": {
-                            "$ref": "#/definitions/api.HealthResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method not allowed",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Evaluates the health of the service and returns a standardized response.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Health"
-                ],
-                "summary": "Check the health of the service",
-                "responses": {
-                    "200": {
-                        "description": "Service is healthy",
-                        "schema": {
-                            "$ref": "#/definitions/api.HealthResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method not allowed",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    }
-                }
             }
         },
         "/sign/{deviceId}": {
@@ -160,7 +79,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Signature successfully generated",
                         "schema": {
-                            "$ref": "#/definitions/api.SignatureResponse"
+                            "$ref": "#/definitions/api.SignaturedDataResponse"
                         }
                     },
                     "400": {
@@ -279,10 +198,16 @@ const docTemplate = `{
                 }
             }
         },
-        "api.SignatureResponse": {
+        "api.SignaturedDataResponse": {
             "type": "object",
             "properties": {
-                "deviceId": {
+                "signature": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "signed_data": {
                     "type": "string"
                 }
             }
@@ -293,7 +218,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "http://localhost:8080/",
+	Host:             "localhost:8080",
 	BasePath:         "/api/v0",
 	Schemes:          []string{},
 	Title:            "Signing Service API",

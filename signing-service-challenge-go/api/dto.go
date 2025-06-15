@@ -10,15 +10,17 @@ type CreateSignatureDeviceResponse struct {
 	PrivateKey string    `json:"privateKey"`
 }
 
-type SignatureResponse struct {
-	ID uuid.UUID `json:"deviceId"`
+type SignaturedDataResponse struct {
+	Signature  []byte `json:"signature"`
+	SignedData string `json:"signed_data"`
 }
 
 type GetSignatureDeviceResponse struct {
-	ID                uuid.UUID `json:"id"`
-	Algorithm         string    `json:"algorithm"`
-	Label             string    `json:"label"`
-	PublicKey         string    `json:"publicKey"`
-	PrivateKey        string    `json:"privateKey"`
-	Signature_counter int       `json:"signatureCounter"`
+	ID               uuid.UUID `json:"id"`
+	Algorithm        string    `json:"algorithm"`
+	Label            string    `json:"label"`
+	PublicKey        string    `json:"publicKey"`
+	PrivateKey       string    `json:"privateKey"`
+	SignatureCounter int       `json:"signatureCounter"`
+	LastSignature    string    `json:"lastSignature,omitempty"`
 }
