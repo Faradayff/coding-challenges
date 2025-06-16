@@ -12,10 +12,10 @@ import (
 )
 
 type DeviceApi struct {
-	service *domain.UserService
+	service *domain.DeviceService
 }
 
-func NewDeviceApi(service *domain.UserService) *DeviceApi {
+func NewDeviceApi(service *domain.DeviceService) *DeviceApi {
 	return &DeviceApi{
 		service: service,
 	}

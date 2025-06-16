@@ -24,7 +24,7 @@ type ErrorResponse struct {
 type Server struct {
 	listenAddress string
 	api           *DeviceApi
-	service       *domain.UserService
+	service       *domain.DeviceService
 	repo          *persistence.DeviceRepository
 }
 

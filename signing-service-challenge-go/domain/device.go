@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"sync"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/crypto"
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/model"
@@ -11,19 +12,22 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserService struct {
-	repo *persistence.DeviceRepository
+type DeviceService struct {
+	repo       *persistence.DeviceRepository
+	devicesMus map[uuid.UUID]*sync.Mutex // map to avoid signning from the same device at the same time
+	mu         sync.Mutex                // mutex to avoid concurrent access to the mutexes map
 }
 
-// NewUserService creates a new UserService instance with the provided repository
-func NewUserService(repo *persistence.DeviceRepository) *UserService {
-	return &UserService{
-		repo: repo,
+// NewUserService creates a new UserService instance with the provided repository and initializes the mutex map
+func NewUserService(repo *persistence.DeviceRepository) *DeviceService {
+	return &DeviceService{
+		repo:       repo,
+		devicesMus: make(map[uuid.UUID]*sync.Mutex),
 	}
 }
 
 // CreateSignatureDevice creates a new signature device with the specified algorithm and label
-func (s *UserService) CreateSignatureDevice(ctx context.Context, algorithm, label string) (model.Device, error) {
+func (s *DeviceService) CreateSignatureDevice(ctx context.Context, algorithm, label string) (model.Device, error) {
 	id := uuid.New()
 
 	// Creating new public and private keys
@@ -66,16 +70,26 @@ func (s *UserService) CreateSignatureDevice(ctx context.Context, algorithm, labe
 		return model.Device{}, fmt.Errorf("failed to save device: %w", err)
 	}
 
+	// Create the mutex for this device
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.devicesMus[id] = &sync.Mutex{}
+
 	return device, nil
 }
 
 // SignTransaction signs the provided data using the device's private key and returns the signed data
-func (s *UserService) SignTransaction(ctx context.Context, ID uuid.UUID, data string) (model.SignaturedData, error) {
+func (s *DeviceService) SignTransaction(ctx context.Context, id uuid.UUID, data string) (model.SignaturedData, error) {
 	// Retrieve the device from the persistence layer using the ID
-	device, err := s.repo.FindByID(ID)
+	device, err := s.repo.FindByID(id)
 	if err != nil {
 		return model.SignaturedData{}, fmt.Errorf("device not found: %w", err)
 	}
+
+	// Blocking device from be modified or accessed until we have finished
+	s.devicesMus[id].Lock()
+	defer s.devicesMus[id].Unlock()
 
 	// Preparing data to be signed
 	header := device.SignatureCounter
@@ -115,20 +129,17 @@ func (s *UserService) SignTransaction(ctx context.Context, ID uuid.UUID, data st
 		SignedData: preparedData,
 	}
 
-	// Increasing the counter
-	device.SignatureCounter++
-
-	// Setting the new last signature
-	device.LastSignature = base64.StdEncoding.EncodeToString(signature)
-
-	// No need to save the changes in the device since we have a pointer to it
-	// with a persistant database this would be different
+	// Updating signature counter and last signature of the device
+	err = s.repo.AfterSignUpdateDevice(device.ID, base64.StdEncoding.EncodeToString(signature))
+	if err != nil {
+		return model.SignaturedData{}, fmt.Errorf("failed to update device after signing: %w", err)
+	}
 
 	return signaturedData, nil
 }
 
 // GetDevice retrieves a device by its ID
-func (s *UserService) GetDevice(ctx context.Context, ID uuid.UUID) (model.Device, error) {
+func (s *DeviceService) GetDevice(ctx context.Context, ID uuid.UUID) (model.Device, error) {
 	device, err := s.repo.FindByID(ID)
 	if err != nil {
 		return model.Device{}, fmt.Errorf("device not found: %w", err)
@@ -138,7 +149,7 @@ func (s *UserService) GetDevice(ctx context.Context, ID uuid.UUID) (model.Device
 }
 
 // GetAllDevices retrieves all devices
-func (s *UserService) GetAllDevices(ctx context.Context) ([]model.Device, error) {
+func (s *DeviceService) GetAllDevices(ctx context.Context) ([]model.Device, error) {
 	devices, err := s.repo.GetAll()
 	if err != nil {
 		return []model.Device{}, fmt.Errorf("error retrieving all the devices: %w", err)

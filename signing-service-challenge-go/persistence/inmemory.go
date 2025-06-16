@@ -42,19 +42,6 @@ func (r *DeviceRepository) FindByID(id uuid.UUID) (*model.Device, error) {
 	return &device, nil
 }
 
-// Delete removes a device by its ID
-func (r *DeviceRepository) Delete(id uuid.UUID) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if _, exists := r.data[id]; !exists {
-		return errors.New("device not found")
-	}
-
-	delete(r.data, id)
-	return nil
-}
-
 // GetAll retrieves all the devices
 func (r *DeviceRepository) GetAll() ([]model.Device, error) {
 	r.mu.RLock()
@@ -66,4 +53,21 @@ func (r *DeviceRepository) GetAll() ([]model.Device, error) {
 	}
 
 	return devices, nil
+}
+
+// AfterSignUpdateDevice increments the signature counter and update the last signature checking multiple accesses
+func (r *DeviceRepository) AfterSignUpdateDevice(id uuid.UUID, lastSignature string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	device, exists := r.data[id]
+	if !exists {
+		return errors.New("device not found")
+	}
+
+	device.SignatureCounter++
+	device.LastSignature = lastSignature
+
+	r.data[id] = device
+	return nil
 }
