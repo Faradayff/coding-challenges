@@ -59,7 +59,9 @@ func (s *Server) Run() error {
 	// Create a subrouter for device-related routes
 	deviceMux := http.NewServeMux()
 	deviceMux.Handle("POST /new-device", http.HandlerFunc(s.api.CreateSignatureDevice))
-	deviceMux.Handle("POST /sign", http.HandlerFunc(s.api.SignTransaction))
+	deviceMux.Handle("GET /sign", http.HandlerFunc(s.api.SignTransaction))
+	deviceMux.Handle("GET /", http.HandlerFunc(s.api.GetDevice))
+	deviceMux.Handle("GET /all", http.HandlerFunc(s.api.GetAllDevices))
 
 	// Add the device prefix
 	mux.Handle("/api/v0/device/", http.StripPrefix("/api/v0/device", deviceMux))

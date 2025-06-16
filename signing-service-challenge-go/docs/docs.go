@@ -15,6 +15,32 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/all": {
+            "get": {
+                "description": "Retrieves all the devices and its details.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Devices"
+                ],
+                "summary": "Get all the devices",
+                "responses": {
+                    "200": {
+                        "description": "Devices successfully retrieved",
+                        "schema": {
+                            "$ref": "#/definitions/api.GetAllDevicesResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Evaluates the health of the service and returns a standardized response.",
@@ -44,12 +70,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/new-device": {
+            "post": {
+                "description": "Creates a new signature device with the specified parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Devices"
+                ],
+                "summary": "Create a new signature device",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Algorithm (ECC or RSA)",
+                        "name": "algorithm",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Label for the device",
+                        "name": "label",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.CreateDeviceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/sign/{deviceId}": {
             "post": {
                 "description": "Signs a transaction using the specified device ID and data payload.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -103,52 +174,48 @@ const docTemplate = `{
                 }
             }
         },
-        "/signature-device": {
-            "post": {
-                "description": "Creates a new signature device with the specified parameters",
-                "consumes": [
-                    "application/json"
-                ],
+        "/{deviceId}": {
+            "get": {
+                "description": "Retrieves a device by its ID and returns its details.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Devices"
                 ],
-                "summary": "Create a new signature device",
+                "summary": "Get a device",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Algorithm (ECC or RSA)",
-                        "name": "algorithm",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Label for the device",
-                        "name": "label",
-                        "in": "query",
+                        "description": "Device ID",
+                        "name": "deviceId",
+                        "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Device successfully retrieved",
                         "schema": {
-                            "$ref": "#/definitions/api.CreateSignatureDeviceResponse"
+                            "$ref": "#/definitions/api.GetDeviceResponse"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid input data",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Device not found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -156,7 +223,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "api.CreateSignatureDeviceResponse": {
+        "api.CreateDeviceResponse": {
             "type": "object",
             "properties": {
                 "algorithm": {
@@ -184,6 +251,46 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "api.GetAllDevicesResponse": {
+            "type": "object",
+            "properties": {
+                "devices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.GetDeviceResponse"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.GetDeviceResponse": {
+            "type": "object",
+            "properties": {
+                "algorithm": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "lastSignature": {
+                    "type": "string"
+                },
+                "privateKey": {
+                    "type": "string"
+                },
+                "publicKey": {
+                    "type": "string"
+                },
+                "signatureCounter": {
+                    "type": "integer"
                 }
             }
         },

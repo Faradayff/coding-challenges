@@ -2,7 +2,7 @@ package api
 
 import "github.com/google/uuid"
 
-type CreateSignatureDeviceResponse struct {
+type CreateDeviceResponse struct {
 	ID         uuid.UUID `json:"id"`
 	Algorithm  string    `json:"algorithm"`
 	Label      string    `json:"label"`
@@ -15,7 +15,7 @@ type SignaturedDataResponse struct {
 	SignedData string `json:"signed_data"`
 }
 
-type GetSignatureDeviceResponse struct {
+type GetDeviceResponse struct {
 	ID               uuid.UUID `json:"id"`
 	Algorithm        string    `json:"algorithm"`
 	Label            string    `json:"label"`
@@ -23,4 +23,14 @@ type GetSignatureDeviceResponse struct {
 	PrivateKey       string    `json:"privateKey"`
 	SignatureCounter int       `json:"signatureCounter"`
 	LastSignature    string    `json:"lastSignature,omitempty"`
+}
+
+// GetAllDevicesResponse created for possible future use of pagination
+type GetAllDevicesResponse struct {
+	Devices []GetDeviceResponse `json:"devices"`
+	Total   int                 `json:"total"`
+}
+
+type SignTransactionRequest struct {
+	Data string `json:"data"`
 }

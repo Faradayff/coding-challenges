@@ -54,3 +54,16 @@ func (r *DeviceRepository) Delete(id uuid.UUID) error {
 	delete(r.data, id)
 	return nil
 }
+
+// GetAll retrieves all the devices
+func (r *DeviceRepository) GetAll() ([]model.Device, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	devices := make([]model.Device, 0, len(r.data))
+	for _, device := range r.data {
+		devices = append(devices, device)
+	}
+
+	return devices, nil
+}

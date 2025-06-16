@@ -1,6 +1,6 @@
 basePath: /api/v0
 definitions:
-  api.CreateSignatureDeviceResponse:
+  api.CreateDeviceResponse:
     properties:
       algorithm:
         type: string
@@ -19,6 +19,32 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  api.GetAllDevicesResponse:
+    properties:
+      devices:
+        items:
+          $ref: '#/definitions/api.GetDeviceResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  api.GetDeviceResponse:
+    properties:
+      algorithm:
+        type: string
+      id:
+        type: string
+      label:
+        type: string
+      lastSignature:
+        type: string
+      privateKey:
+        type: string
+      publicKey:
+        type: string
+      signatureCounter:
+        type: integer
     type: object
   api.HealthResponse:
     properties:
@@ -43,6 +69,54 @@ info:
   title: Signing Service API
   version: "1.0"
 paths:
+  /{deviceId}:
+    get:
+      description: Retrieves a device by its ID and returns its details.
+      parameters:
+      - description: Device ID
+        in: path
+        name: deviceId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Device successfully retrieved
+          schema:
+            $ref: '#/definitions/api.GetDeviceResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "404":
+          description: Device not found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get a device
+      tags:
+      - Devices
+  /all:
+    get:
+      description: Retrieves all the devices and its details.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Devices successfully retrieved
+          schema:
+            $ref: '#/definitions/api.GetAllDevicesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get all the devices
+      tags:
+      - Devices
   /health:
     get:
       consumes:
@@ -63,10 +137,40 @@ paths:
       summary: Check the health of the service
       tags:
       - Health
+  /new-device:
+    post:
+      description: Creates a new signature device with the specified parameters
+      parameters:
+      - description: Algorithm (ECC or RSA)
+        in: query
+        name: algorithm
+        required: true
+        type: string
+      - description: Label for the device
+        in: query
+        name: label
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.CreateDeviceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new signature device
+      tags:
+      - Devices
   /sign/{deviceId}:
     post:
-      consumes:
-      - application/json
       description: Signs a transaction using the specified device ID and data payload.
       parameters:
       - description: Device ID
@@ -100,40 +204,6 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrorResponse'
       summary: Sign a transaction
-      tags:
-      - Devices
-  /signature-device:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new signature device with the specified parameters
-      parameters:
-      - description: Algorithm (ECC or RSA)
-        in: query
-        name: algorithm
-        required: true
-        type: string
-      - description: Label for the device
-        in: query
-        name: label
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.CreateSignatureDeviceResponse'
-        "400":
-          description: Bad Request
-          schema:
-            type: string
-        "500":
-          description: Internal Server Error
-          schema:
-            type: string
-      summary: Create a new signature device
       tags:
       - Devices
 swagger: "2.0"
