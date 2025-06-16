@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/persistence"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -21,14 +23,26 @@ type ErrorResponse struct {
 // Server manages HTTP requests and dispatches them to the appropriate services.
 type Server struct {
 	listenAddress string
-	api           Api
+	api           *DeviceApi
+	service       *domain.UserService
+	repo          *persistence.DeviceRepository
 }
 
 // NewServer is a factory to instantiate a new Server.
 func NewServer(listenAddress string) *Server {
+	// Initialize persistence layer
+	repo := persistence.NewDeviceRepository()
+
+	// Initialize user service
+	service := domain.NewUserService(repo)
+
+	// Initialize device API
+	api := NewDeviceApi(service)
 	return &Server{
 		listenAddress: listenAddress,
-		// TODO: add services / further dependencies here ...
+		api:           api,
+		service:       service,
+		repo:          repo,
 	}
 }
 

@@ -8,8 +8,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type Api struct {
-	service domain.UserService
+type DeviceApi struct {
+	service *domain.UserService
+}
+
+func NewDeviceApi(service *domain.UserService) *DeviceApi {
+	return &DeviceApi{
+		service: service,
+	}
 }
 
 // CreateSignatureDevice godoc
@@ -25,7 +31,7 @@ type Api struct {
 // @Failure 400 {string} string "Bad Request"
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /signature-device [post]
-func (a *Api) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
+func (a *DeviceApi) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 	algorithm := r.URL.Query().Get("algorithm")
 	label := r.URL.Query().Get("label")
 
@@ -102,7 +108,7 @@ func (a *Api) CreateSignatureDevice(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResponse "Device not found"
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /sign/{deviceId} [post]
-func (a *Api) SignTransaction(w http.ResponseWriter, r *http.Request) {
+func (a *DeviceApi) SignTransaction(w http.ResponseWriter, r *http.Request) {
 	deviceId := r.URL.Query().Get("deviceId")
 	data := r.URL.Query().Get("data")
 
@@ -144,8 +150,8 @@ func (a *Api) SignTransaction(w http.ResponseWriter, r *http.Request) {
 	WriteAPIResponse(w, http.StatusOK, signaturedDataResponse)
 }
 
-func (a *Api) GetSignatureDevice(w http.ResponseWriter, r *http.Request) {
+func (a *DeviceApi) GetSignatureDevice(w http.ResponseWriter, r *http.Request) {
 }
 
-func (a *Api) ListSignatureDevices(w http.ResponseWriter, r *http.Request) {
+func (a *DeviceApi) ListSignatureDevices(w http.ResponseWriter, r *http.Request) {
 }

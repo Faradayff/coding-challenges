@@ -6,14 +6,23 @@ import (
 	"fmt"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/crypto"
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/model"
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/persistence"
 	"github.com/google/uuid"
 )
 
 type UserService struct {
-	repo any //UserRepository
+	repo *persistence.DeviceRepository
 }
 
-func (s *UserService) CreateSignatureDevice(ctx context.Context, algorithm, label string) (Device, error) {
+// NewUserService crea una nueva instancia de UserService con el repositorio inyectado
+func NewUserService(repo *persistence.DeviceRepository) *UserService {
+	return &UserService{
+		repo: repo,
+	}
+}
+
+func (s *UserService) CreateSignatureDevice(ctx context.Context, algorithm, label string) (model.Device, error) {
 	id := uuid.New()
 
 	// Creating new public and private keys
@@ -23,7 +32,7 @@ func (s *UserService) CreateSignatureDevice(ctx context.Context, algorithm, labe
 
 		eccKeys, err := eccGenerator.Generate()
 		if err != nil {
-			return Device{}, err
+			return model.Device{}, err
 		}
 
 		publicKey = eccKeys.Public
@@ -33,16 +42,15 @@ func (s *UserService) CreateSignatureDevice(ctx context.Context, algorithm, labe
 
 		rsaKeys, err := rsaGenerator.Generate()
 		if err != nil {
-			return Device{}, err
+			return model.Device{}, err
 		}
 
 		publicKey = rsaKeys.Public
 		privateKey = rsaKeys.Private
 	}
 
-	// Call the persistence layer to save the device
-
-	device := Device{
+	// Create the new device
+	device := model.Device{
 		ID:               id,
 		Algorithm:        algorithm,
 		Label:            label,
@@ -50,12 +58,22 @@ func (s *UserService) CreateSignatureDevice(ctx context.Context, algorithm, labe
 		PrivateKey:       privateKey,
 		SignatureCounter: 0,
 	}
+
+	// Save it in memory
+	err := s.repo.Create(device)
+	if err != nil {
+		return model.Device{}, fmt.Errorf("failed to save device: %w", err)
+	}
+
 	return device, nil
 }
 
-func (s *UserService) SignTransaction(ctx context.Context, ID uuid.UUID, data string) (SignaturedData, error) {
+func (s *UserService) SignTransaction(ctx context.Context, ID uuid.UUID, data string) (model.SignaturedData, error) {
 	// Retrieve the device from the persistence layer using the ID
-	device := Device{}
+	device, err := s.repo.FindByID(ID)
+	if err != nil {
+		return model.SignaturedData{}, fmt.Errorf("device not found: %w", err)
+	}
 
 	// Preparing data to be signed
 	header := device.SignatureCounter
@@ -64,7 +82,7 @@ func (s *UserService) SignTransaction(ctx context.Context, ID uuid.UUID, data st
 	if device.SignatureCounter == 0 {
 		idBytes, err := device.ID.MarshalBinary()
 		if err != nil {
-			return SignaturedData{}, err
+			return model.SignaturedData{}, err
 		}
 		end = base64.StdEncoding.EncodeToString(idBytes)
 	} else {
@@ -74,24 +92,23 @@ func (s *UserService) SignTransaction(ctx context.Context, ID uuid.UUID, data st
 
 	// Signing the data
 	var signature []byte
-	var err error
 
 	if device.Algorithm == "ECC" {
 		eccSigner := crypto.ECCSigner{}
 		signature, err = eccSigner.Sign(preparedData, device.PrivateKey, device.PublicKey)
 		if err != nil {
-			return SignaturedData{}, fmt.Errorf("failed to sign data: %w", err)
+			return model.SignaturedData{}, fmt.Errorf("failed to sign data: %w", err)
 		}
 	} else if device.Algorithm == "RSA" {
 		rsaSigner := crypto.RSASigner{}
 		signature, err = rsaSigner.Sign(preparedData, device.PrivateKey, device.PublicKey)
 		if err != nil {
-			return SignaturedData{}, fmt.Errorf("failed to sign data: %w", err)
+			return model.SignaturedData{}, fmt.Errorf("failed to sign data: %w", err)
 		}
 	}
 
 	// Creating returning data
-	signaturedData := SignaturedData{
+	signaturedData := model.SignaturedData{
 		Signature:  signature,
 		SignedData: preparedData,
 	}
@@ -101,6 +118,8 @@ func (s *UserService) SignTransaction(ctx context.Context, ID uuid.UUID, data st
 
 	// Setting the new last signature
 	device.LastSignature = base64.StdEncoding.EncodeToString(signature)
+
+	// No need to save the changes in the device since we have a pointer to it
 
 	return signaturedData, nil
 }
