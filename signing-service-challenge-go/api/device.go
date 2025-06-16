@@ -194,7 +194,10 @@ func (a *DeviceApi) GetDevice(w http.ResponseWriter, r *http.Request) {
 
 	// Calling the service
 	device, err := a.service.GetDevice(ctx, uuid)
-	if err != nil {
+	if err != nil && err.Error() == "device not found" {
+		WriteErrorResponse(w, http.StatusNotFound, []string{"Device not found"})
+		return
+	} else if err != nil {
 		WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
 		return
 	}

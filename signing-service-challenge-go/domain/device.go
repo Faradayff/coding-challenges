@@ -79,7 +79,7 @@ func (s *DeviceService) SignTransaction(ctx context.Context, id uuid.UUID, data 
 	// Retrieve the device from the persistence layer using the ID
 	device, err := s.repo.FindByID(id)
 	if err != nil {
-		return model.SignaturedData{}, fmt.Errorf("device not found: %w", err)
+		return model.SignaturedData{}, err
 	}
 
 	// Checking if the device has an active mutex
@@ -148,7 +148,7 @@ func (s *DeviceService) SignTransaction(ctx context.Context, id uuid.UUID, data 
 func (s *DeviceService) GetDevice(ctx context.Context, ID uuid.UUID) (model.Device, error) {
 	device, err := s.repo.FindByID(ID)
 	if err != nil {
-		return model.Device{}, fmt.Errorf("device not found: %w", err)
+		return model.Device{}, err
 	}
 
 	return *device, nil
