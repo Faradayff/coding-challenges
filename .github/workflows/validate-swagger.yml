@@ -1,0 +1,28 @@
+name: Swagger Validation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  validate-swagger:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: signing-service-challenge-go
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install swagger-cli
+        run: npm install -g @apidevtools/swagger-cli
+
+      - name: Validate Swagger spec
+        run: swagger-cli validate docs/swagger.yaml
