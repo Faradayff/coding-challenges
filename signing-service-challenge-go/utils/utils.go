@@ -6,10 +6,22 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/crypto"
 )
 
+type UtilsInterface interface {
+	RSAPublicKeyToString(publicKey any) (string, error)
+	ECCPublicKeyToString(publicKey any) (string, error)
+	RSAPrivateKeyToString(privateKey any) (string, error)
+	ECCPrivateKeyToString(privateKey any) (string, error)
+	GenerateNewKeyPair(algorithm string) (any, any, error)
+}
+
+type RealUtils struct{}
+
 // Convert ECC public key to PEM string
-func ECCPublicKeyToString(publicKey any) (string, error) {
+func (u *RealUtils) ECCPublicKeyToString(publicKey any) (string, error) {
 	publicKeyECC, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
 		return "", fmt.Errorf("failed to assert type of ECC public key")
@@ -29,7 +41,7 @@ func ECCPublicKeyToString(publicKey any) (string, error) {
 }
 
 // Convert ECC private key to PEM string
-func ECCPrivateKeyToString(privateKey any) (string, error) {
+func (u *RealUtils) ECCPrivateKeyToString(privateKey any) (string, error) {
 	privateKeyECC, ok := privateKey.(*ecdsa.PrivateKey)
 	if !ok {
 		return "", fmt.Errorf("failed to assert type of ECC private key")
@@ -49,7 +61,7 @@ func ECCPrivateKeyToString(privateKey any) (string, error) {
 }
 
 // Convert RSA public key to PEM string
-func RSAPublicKeyToString(publicKey any) (string, error) {
+func (u *RealUtils) RSAPublicKeyToString(publicKey any) (string, error) {
 	publicKeyRSA, ok := publicKey.(*rsa.PublicKey)
 	if !ok {
 		return "", fmt.Errorf("failed to assert type of RSA public key")
@@ -69,7 +81,7 @@ func RSAPublicKeyToString(publicKey any) (string, error) {
 }
 
 // Convert RSA private key to PEM string
-func RSAPrivateKeyToString(privateKey any) (string, error) {
+func (u *RealUtils) RSAPrivateKeyToString(privateKey any) (string, error) {
 	privateKeyRSA, ok := privateKey.(*rsa.PrivateKey)
 	if !ok {
 		return "", fmt.Errorf("failed to assert type of RSA private key")
@@ -82,4 +94,34 @@ func RSAPrivateKeyToString(privateKey any) (string, error) {
 	})
 
 	return string(privateKeyPEM), nil
+}
+
+// GenerateNewKeyPair generates a new key pair based on the specified algorithm
+func (u *RealUtils) GenerateNewKeyPair(algorithm string) (any, any, error) {
+	var publicKey, privateKey any
+	if algorithm == "ECC" {
+		eccGenerator := crypto.ECCGenerator{}
+
+		eccKeys, err := eccGenerator.Generate()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		publicKey = eccKeys.Public
+		privateKey = eccKeys.Private
+	} else if algorithm == "RSA" {
+		rsaGenerator := crypto.RSAGenerator{}
+
+		rsaKeys, err := rsaGenerator.Generate()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		publicKey = rsaKeys.Public
+		privateKey = rsaKeys.Private
+	} else {
+		return nil, nil, fmt.Errorf("unsupported algorithm: %s", algorithm)
+	}
+
+	return publicKey, privateKey, nil
 }

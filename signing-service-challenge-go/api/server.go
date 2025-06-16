@@ -7,6 +7,7 @@ import (
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/persistence"
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/utils"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -33,11 +34,14 @@ func NewServer(listenAddress string) *Server {
 	// Initialize persistence layer
 	repo := persistence.NewDeviceRepository()
 
+	// Initialize utils
+	utils := utils.RealUtils{}
+
 	// Initialize user service
-	service := domain.NewUserService(repo)
+	service := domain.NewDeviceService(repo, &utils, nil)
 
 	// Initialize device API
-	api := NewDeviceApi(service)
+	api := NewDeviceApi(service, &utils)
 	return &Server{
 		listenAddress: listenAddress,
 		api:           api,

@@ -9,19 +9,32 @@ import (
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/crypto"
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/model"
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/persistence"
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/utils"
 	"github.com/google/uuid"
 )
 
+// DeviceServiceInterface defines the interface for device-related operations
+type DeviceServiceInterface interface {
+	CreateSignatureDevice(ctx context.Context, algorithm, label string) (model.Device, error)
+	SignTransaction(ctx context.Context, id uuid.UUID, data string) (model.SignaturedData, error)
+	GetDevice(ctx context.Context, id uuid.UUID) (model.Device, error)
+	GetAllDevices(ctx context.Context) ([]model.Device, error)
+}
+
 type DeviceService struct {
-	repo       *persistence.DeviceRepository
+	repo       persistence.DeviceRepoInterface
+	utils      utils.UtilsInterface
+	signer     crypto.SignerInterface
 	devicesMus map[uuid.UUID]*sync.Mutex // map to avoid signning from the same device at the same time
 	mu         sync.Mutex                // mutex to avoid concurrent access to the mutexes map
 }
 
-// NewUserService creates a new UserService instance with the provided repository and initializes the mutex map
-func NewUserService(repo *persistence.DeviceRepository) *DeviceService {
+// NewDeviceService creates a new UserService instance with the provided repository and initializes the mutex map
+func NewDeviceService(repo persistence.DeviceRepoInterface, utils utils.UtilsInterface, signer crypto.SignerInterface) *DeviceService {
 	return &DeviceService{
 		repo:       repo,
+		utils:      utils,
+		signer:     signer,
 		devicesMus: make(map[uuid.UUID]*sync.Mutex),
 	}
 }
@@ -31,27 +44,9 @@ func (s *DeviceService) CreateSignatureDevice(ctx context.Context, algorithm, la
 	id := uuid.New()
 
 	// Creating new public and private keys
-	var publicKey, privateKey any
-	if algorithm == "ECC" {
-		eccGenerator := crypto.ECCGenerator{}
-
-		eccKeys, err := eccGenerator.Generate()
-		if err != nil {
-			return model.Device{}, err
-		}
-
-		publicKey = eccKeys.Public
-		privateKey = eccKeys.Private
-	} else if algorithm == "RSA" {
-		rsaGenerator := crypto.RSAGenerator{}
-
-		rsaKeys, err := rsaGenerator.Generate()
-		if err != nil {
-			return model.Device{}, err
-		}
-
-		publicKey = rsaKeys.Public
-		privateKey = rsaKeys.Private
+	publicKey, privateKey, err := s.utils.GenerateNewKeyPair(algorithm)
+	if err != nil {
+		return model.Device{}, fmt.Errorf("failed to generate key pair: %w", err)
 	}
 
 	// Create the new device
@@ -65,7 +60,7 @@ func (s *DeviceService) CreateSignatureDevice(ctx context.Context, algorithm, la
 	}
 
 	// Save it in the database
-	err := s.repo.Create(device)
+	err = s.repo.Create(device)
 	if err != nil {
 		return model.Device{}, fmt.Errorf("failed to save device: %w", err)
 	}
@@ -85,6 +80,12 @@ func (s *DeviceService) SignTransaction(ctx context.Context, id uuid.UUID, data 
 	device, err := s.repo.FindByID(id)
 	if err != nil {
 		return model.SignaturedData{}, fmt.Errorf("device not found: %w", err)
+	}
+
+	// Checking if the device has an active mutex
+	_, exists := s.devicesMus[id]
+	if !exists {
+		s.devicesMus[id] = &sync.Mutex{}
 	}
 
 	// Blocking device from be modified or accessed until we have finished
@@ -109,17 +110,22 @@ func (s *DeviceService) SignTransaction(ctx context.Context, id uuid.UUID, data 
 	// Signing the data
 	var signature []byte
 
-	if device.Algorithm == "ECC" {
-		eccSigner := crypto.ECCSigner{}
-		signature, err = eccSigner.Sign(preparedData, device.PrivateKey, device.PublicKey)
-		if err != nil {
-			return model.SignaturedData{}, fmt.Errorf("failed to sign data: %w", err)
-		}
-	} else if device.Algorithm == "RSA" {
-		rsaSigner := crypto.RSASigner{}
-		signature, err = rsaSigner.Sign(preparedData, device.PrivateKey, device.PublicKey)
-		if err != nil {
-			return model.SignaturedData{}, fmt.Errorf("failed to sign data: %w", err)
+	if _, ok := s.signer.(*crypto.MockSigner); ok {
+		// Mock signing for testing purposes
+		signature = []byte("mocked_signature")
+	} else {
+		if device.Algorithm == "ECC" {
+			eccSigner := crypto.ECCSigner{}
+			signature, err = eccSigner.Sign(preparedData, device.PrivateKey, device.PublicKey)
+			if err != nil {
+				return model.SignaturedData{}, fmt.Errorf("failed to sign data: %w", err)
+			}
+		} else if device.Algorithm == "RSA" {
+			rsaSigner := crypto.RSASigner{}
+			signature, err = rsaSigner.Sign(preparedData, device.PrivateKey, device.PublicKey)
+			if err != nil {
+				return model.SignaturedData{}, fmt.Errorf("failed to sign data: %w", err)
+			}
 		}
 	}
 

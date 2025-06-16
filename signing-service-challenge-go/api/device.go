@@ -1,9 +1,8 @@
 package api
 
 import (
-	"net/http"
-
 	"encoding/json"
+	"net/http"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/model"
@@ -12,12 +11,14 @@ import (
 )
 
 type DeviceApi struct {
-	service *domain.DeviceService
+	service domain.DeviceServiceInterface
+	utils   utils.UtilsInterface
 }
 
-func NewDeviceApi(service *domain.DeviceService) *DeviceApi {
+func NewDeviceApi(service domain.DeviceServiceInterface, utils utils.UtilsInterface) *DeviceApi {
 	return &DeviceApi{
 		service: service,
+		utils:   utils,
 	}
 }
 
@@ -38,6 +39,10 @@ func (a *DeviceApi) CreateSignatureDevice(w http.ResponseWriter, r *http.Request
 	label := r.URL.Query().Get("label")
 
 	// Validate required parameters
+	if label == "" {
+		WriteErrorResponse(w, http.StatusBadRequest, []string{"Missing required parameter: label"})
+		return
+	}
 	if algorithm == "" {
 		WriteErrorResponse(w, http.StatusBadRequest, []string{"Missing required parameter: algorithm"})
 		return
@@ -61,24 +66,24 @@ func (a *DeviceApi) CreateSignatureDevice(w http.ResponseWriter, r *http.Request
 	var publicKey, privateKey string
 	if algorithm == "ECC" {
 
-		publicKey, err = utils.ECCPublicKeyToString(device.PublicKey)
+		publicKey, err = a.utils.ECCPublicKeyToString(device.PublicKey)
 		if err != nil {
 			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
 		}
 
-		privateKey, err = utils.ECCPrivateKeyToString(device.PrivateKey)
+		privateKey, err = a.utils.ECCPrivateKeyToString(device.PrivateKey)
 		if err != nil {
 			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
 		}
 
 	} else if algorithm == "RSA" {
 
-		publicKey, err = utils.RSAPublicKeyToString(device.PublicKey)
+		publicKey, err = a.utils.RSAPublicKeyToString(device.PublicKey)
 		if err != nil {
 			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
 		}
 
-		privateKey, err = utils.RSAPrivateKeyToString(device.PrivateKey)
+		privateKey, err = a.utils.RSAPrivateKeyToString(device.PrivateKey)
 		if err != nil {
 			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
 		}
@@ -195,7 +200,7 @@ func (a *DeviceApi) GetDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Creating response
-	getDeviceResponse, err := deviceToGetDeviceResponse(device)
+	getDeviceResponse, err := a.deviceToGetDeviceResponse(device)
 	if err != nil {
 		WriteErrorResponse(w, http.StatusInternalServerError, []string{"Failed to convert device to response", err.Error()})
 	}
@@ -223,7 +228,7 @@ func (a *DeviceApi) GetAllDevices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Creating response
-	getDeviceResponse, err := devicesToGetAllDevicesResponse(devices)
+	getDeviceResponse, err := a.devicesToGetAllDevicesResponse(devices)
 	if err != nil {
 		WriteErrorResponse(w, http.StatusInternalServerError, []string{"Failed to convert device to response", err.Error()})
 	}
@@ -232,27 +237,27 @@ func (a *DeviceApi) GetAllDevices(w http.ResponseWriter, r *http.Request) {
 }
 
 // Convert Device to GetDeviceResponse
-func deviceToGetDeviceResponse(device model.Device) (GetDeviceResponse, error) {
+func (a *DeviceApi) deviceToGetDeviceResponse(device model.Device) (GetDeviceResponse, error) {
 	var publicKey, privateKey string
 	var err error
 
 	if device.Algorithm == "ECC" {
-		publicKey, err = utils.ECCPublicKeyToString(device.PublicKey)
+		publicKey, err = a.utils.ECCPublicKeyToString(device.PublicKey)
 		if err != nil {
 			return GetDeviceResponse{}, err
 		}
 
-		privateKey, err = utils.ECCPrivateKeyToString(device.PrivateKey)
+		privateKey, err = a.utils.ECCPrivateKeyToString(device.PrivateKey)
 		if err != nil {
 			return GetDeviceResponse{}, err
 		}
 	} else if device.Algorithm == "RSA" {
-		publicKey, err = utils.RSAPublicKeyToString(device.PublicKey)
+		publicKey, err = a.utils.RSAPublicKeyToString(device.PublicKey)
 		if err != nil {
 			return GetDeviceResponse{}, err
 		}
 
-		privateKey, err = utils.RSAPrivateKeyToString(device.PrivateKey)
+		privateKey, err = a.utils.RSAPrivateKeyToString(device.PrivateKey)
 		if err != nil {
 			return GetDeviceResponse{}, err
 		}
@@ -270,10 +275,10 @@ func deviceToGetDeviceResponse(device model.Device) (GetDeviceResponse, error) {
 }
 
 // Convert a slice of Devices to a GetAllDevicesResponse
-func devicesToGetAllDevicesResponse(devices []model.Device) (GetAllDevicesResponse, error) {
+func (a *DeviceApi) devicesToGetAllDevicesResponse(devices []model.Device) (GetAllDevicesResponse, error) {
 	var deviceResponses []GetDeviceResponse
 	for _, device := range devices {
-		deviceResponse, err := deviceToGetDeviceResponse(device)
+		deviceResponse, err := a.deviceToGetDeviceResponse(device)
 		if err != nil {
 			return GetAllDevicesResponse{}, err
 		}

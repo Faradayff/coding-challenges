@@ -9,6 +9,10 @@ import (
 	"fmt"
 )
 
+type SignerInterface interface {
+	Sign(data string, privateKey, publicKey any) ([]byte, error)
+}
+
 type ECCSigner struct{}
 
 func NewECCSigner() *ECCSigner {

@@ -8,6 +8,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type DeviceRepoInterface interface {
+	Create(device model.Device) error
+	FindByID(id uuid.UUID) (*model.Device, error)
+	GetAll() ([]model.Device, error)
+	AfterSignUpdateDevice(id uuid.UUID, lastSignature string) error
+}
+
 type DeviceRepository struct {
 	data map[uuid.UUID]model.Device
 	mu   sync.RWMutex
