@@ -54,7 +54,10 @@ var _ = Describe("DeviceRepo", func() {
 				PrivateKey:       &rsa.PrivateKey{},
 				SignatureCounter: 0,
 			}
-			deviceRepo.Create(device)
+			err := deviceRepo.Create(device)
+			if err != nil {
+				Fail(fmt.Sprintf("Failed setting up the device: %v", err))
+			}
 			deviceID = device.ID
 		})
 
@@ -99,7 +102,10 @@ var _ = Describe("DeviceRepo", func() {
 					PrivateKey:       &rsa.PrivateKey{},
 					SignatureCounter: 0,
 				}
-				deviceRepo.Create(device)
+				err := deviceRepo.Create(device)
+				if err != nil {
+					Fail(fmt.Sprintf("Failed setting up the device: %v", err))
+				}
 				devicesIDs = append(devicesIDs, id)
 			}
 		})
@@ -141,7 +147,10 @@ var _ = Describe("DeviceRepo", func() {
 				PrivateKey:       &rsa.PrivateKey{},
 				SignatureCounter: 0,
 			}
-			deviceRepo.Create(device)
+			err := deviceRepo.Create(device)
+			if err != nil {
+				Fail(fmt.Sprintf("Failed setting up the device: %v", err))
+			}
 			deviceID = device.ID
 		})
 

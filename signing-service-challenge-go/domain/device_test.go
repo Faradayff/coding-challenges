@@ -63,7 +63,7 @@ var _ = Describe("DeviceService", func() {
 			It("should fail when creating the device", func() {
 				faillingDeviceService := NewDeviceService(nil, mockUtils, mockSigner)
 				Expect(func() {
-					faillingDeviceService.CreateSignatureDevice(context.Background(), "ECC", "Test ECC Device")
+					_, _ = faillingDeviceService.CreateSignatureDevice(context.Background(), "ECC", "Test ECC Device")
 				}).To(Panic(), "The device service should panic when the repository is nil")
 			})
 

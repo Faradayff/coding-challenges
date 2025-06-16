@@ -99,7 +99,8 @@ func (u *RealUtils) RSAPrivateKeyToString(privateKey any) (string, error) {
 // GenerateNewKeyPair generates a new key pair based on the specified algorithm
 func (u *RealUtils) GenerateNewKeyPair(algorithm string) (any, any, error) {
 	var publicKey, privateKey any
-	if algorithm == "ECC" {
+	switch algorithm {
+	case "ECC":
 		eccGenerator := crypto.ECCGenerator{}
 
 		eccKeys, err := eccGenerator.Generate()
@@ -109,7 +110,7 @@ func (u *RealUtils) GenerateNewKeyPair(algorithm string) (any, any, error) {
 
 		publicKey = eccKeys.Public
 		privateKey = eccKeys.Private
-	} else if algorithm == "RSA" {
+	case "RSA":
 		rsaGenerator := crypto.RSAGenerator{}
 
 		rsaKeys, err := rsaGenerator.Generate()
@@ -119,7 +120,7 @@ func (u *RealUtils) GenerateNewKeyPair(algorithm string) (any, any, error) {
 
 		publicKey = rsaKeys.Public
 		privateKey = rsaKeys.Private
-	} else {
+	default:
 		return nil, nil, fmt.Errorf("unsupported algorithm: %s", algorithm)
 	}
 

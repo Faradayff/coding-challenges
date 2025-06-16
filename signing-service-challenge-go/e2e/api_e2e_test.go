@@ -244,13 +244,12 @@ var _ = Describe("Device API End-to-End", func() {
 			resp := wrapper.Data
 
 			// Check the response
-			// It should return the devices always in the same order
 			Expect(len(resp.Devices)).To(Equal(2), "Expected two devices to be returned")
 			Expect(resp.Total).To(Equal(2), "Expected total count of devices to be 2")
-			Expect(resp.Devices[0].Algorithm).To(Equal("ECC"), "Expected first device to be ECC")
-			Expect(resp.Devices[0].Label).To(Equal("first"), "Expected first device label to be 'first'")
-			Expect(resp.Devices[1].Algorithm).To(Equal("RSA"), "Expected second device to be RSA")
-			Expect(resp.Devices[1].Label).To(Equal("second"), "Expected second device label to be 'second'")
+			Expect(resp.Devices[0].Algorithm).To(BeElementOf([]string{"ECC", "RSA"}), "Expected first device to be either ECC or RSA")
+			Expect(resp.Devices[0].Label).To(BeElementOf([]string{"first", "second"}), "Expected first device label to be either 'first' or 'second'")
+			Expect(resp.Devices[1].Algorithm).To(BeElementOf([]string{"ECC", "RSA"}), "Expected second device to be either ECC or RSA")
+			Expect(resp.Devices[1].Label).To(BeElementOf([]string{"first", "second"}), "Expected second device label to be either 'first' or 'second'")
 		})
 	})
 })

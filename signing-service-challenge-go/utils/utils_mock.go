@@ -45,10 +45,12 @@ func (m *MockUtils) GenerateNewKeyPair(algorithm string) (any, any, error) {
 	if m.GenerateNewKeyPairFunc != nil {
 		return m.GenerateNewKeyPairFunc(algorithm)
 	}
-	if algorithm == "ECC" {
+	switch algorithm {
+	case "ECC":
 		return &ecdsa.PublicKey{}, &ecdsa.PrivateKey{}, nil
-	} else if algorithm == "RSA" {
+	case "RSA":
 		return &rsa.PublicKey{}, &rsa.PrivateKey{}, nil
+	default:
+		return nil, nil, nil
 	}
-	return nil, nil, nil
 }

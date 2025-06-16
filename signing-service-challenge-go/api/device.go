@@ -64,8 +64,8 @@ func (a *DeviceApi) CreateSignatureDevice(w http.ResponseWriter, r *http.Request
 	}
 
 	var publicKey, privateKey string
-	if algorithm == "ECC" {
-
+	switch device.Algorithm {
+	case "ECC":
 		publicKey, err = a.utils.ECCPublicKeyToString(device.PublicKey)
 		if err != nil {
 			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
@@ -76,8 +76,7 @@ func (a *DeviceApi) CreateSignatureDevice(w http.ResponseWriter, r *http.Request
 			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
 		}
 
-	} else if algorithm == "RSA" {
-
+	case "RSA":
 		publicKey, err = a.utils.RSAPublicKeyToString(device.PublicKey)
 		if err != nil {
 			WriteErrorResponse(w, http.StatusInternalServerError, []string{err.Error()})
@@ -244,7 +243,8 @@ func (a *DeviceApi) deviceToGetDeviceResponse(device model.Device) (GetDeviceRes
 	var publicKey, privateKey string
 	var err error
 
-	if device.Algorithm == "ECC" {
+	switch device.Algorithm {
+	case "ECC":
 		publicKey, err = a.utils.ECCPublicKeyToString(device.PublicKey)
 		if err != nil {
 			return GetDeviceResponse{}, err
@@ -254,7 +254,7 @@ func (a *DeviceApi) deviceToGetDeviceResponse(device model.Device) (GetDeviceRes
 		if err != nil {
 			return GetDeviceResponse{}, err
 		}
-	} else if device.Algorithm == "RSA" {
+	case "RSA":
 		publicKey, err = a.utils.RSAPublicKeyToString(device.PublicKey)
 		if err != nil {
 			return GetDeviceResponse{}, err

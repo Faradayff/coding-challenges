@@ -114,13 +114,14 @@ func (s *DeviceService) SignTransaction(ctx context.Context, id uuid.UUID, data 
 		// Mock signing for testing purposes
 		signature = []byte("mocked_signature")
 	} else {
-		if device.Algorithm == "ECC" {
+		switch device.Algorithm {
+		case "ECC":
 			eccSigner := crypto.ECCSigner{}
 			signature, err = eccSigner.Sign(preparedData, device.PrivateKey, device.PublicKey)
 			if err != nil {
 				return model.SignaturedData{}, fmt.Errorf("failed to sign data: %w", err)
 			}
-		} else if device.Algorithm == "RSA" {
+		case "RSA":
 			rsaSigner := crypto.RSASigner{}
 			signature, err = rsaSigner.Sign(preparedData, device.PrivateKey, device.PublicKey)
 			if err != nil {
